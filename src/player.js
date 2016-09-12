@@ -11,10 +11,13 @@ module.exports = exports = Player;
  * @param {Postition} position object specifying an x and y
  */
 function Player(position) {
+  this.state = "walking";
+  this.frame = 0;
+  this.animateTime = 0;
   this.x = position.x;
   this.y = position.y;
   this.width  = 16;
-  this.height = 16;
+  this.height = 32;
   this.spritesheet  = new Image();
   this.spritesheet.src = encodeURI('assets/link/not link/notlink up.png');
 }
@@ -23,7 +26,14 @@ function Player(position) {
  * @function updates the player object
  * {DOMHighResTimeStamp} time the elapsed time since the last frame
  */
-Player.prototype.update = function(time) {}
+Player.prototype.update = function(time) {
+    this.animateTime += time|0;
+    if (this.animateTime > 1000/16) {
+        this.animateTime = 0;
+        this.frame = (this.frame+1) %4;
+        this.y -= 1;
+    }
+}
 
 /**
  * @function renders the player into the provided context
@@ -35,8 +45,8 @@ Player.prototype.render = function(time, ctx) {
     // image
     this.spritesheet,
     // source rectangle
-    0, 0, this.width, this.height,
+    this.width * this.frame, 0, this.width, this.height,
     // destination rectangle
-    this.x, this.y, this.width, this.height
+    this.x, this.y, 2*this.width, 2*this.height
   );
 }

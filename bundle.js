@@ -1,14 +1,16 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-"use strict;"
+"use strict";
 
 /* Classes */
 const Game = require('./game.js');
 const Player = require('./player.js');
+const Monster = require('./monster.js');
 
 /* Global variables */
 var canvas = document.getElementById('screen');
 var game = new Game(canvas, update, render);
-var player = new Player({x: 382, y: 460})
+var player = new Player({x: 382, y: 460});
+let monster = new Monster({x: 20, y:20});
 
 /**
  * @function masterLoop
@@ -31,24 +33,19 @@ masterLoop(performance.now());
  * the number of milliseconds passed since the last frame.
  */
 function update(elapsedTime) {
-
+  player.update(elapsedTime);
+  monster.update(elapsedTime);
   // TODO: Update the game objects
 }
 
-/**
-  * @function render
-  * Renders the current game state into a back buffer.
-  * @param {DOMHighResTimeStamp} elapsedTime indicates
-  * the number of milliseconds passed since the last frame.
-  * @param {CanvasRenderingContext2D} ctx the context to render to
-  */
 function render(elapsedTime, ctx) {
   ctx.fillStyle = "lightblue";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   player.render(elapsedTime, ctx);
+  monster.render(elapsedTime, ctx);
 }
 
-},{"./game.js":2,"./player.js":3}],2:[function(require,module,exports){
+},{"./game.js":2,"./monster.js":3,"./player.js":4}],2:[function(require,module,exports){
 "use strict";
 
 /**
@@ -107,6 +104,49 @@ Game.prototype.loop = function(newTime) {
 }
 
 },{}],3:[function(require,module,exports){
+
+class Monster {
+    constructor (args) {
+        let {x, y} = args;
+        this.x = x;
+        this.y = y;
+        this.width = 16;
+        this.height = 16
+        this.spriteWidth = 16;
+        this.spriteHeight = 16;
+        this.spritesheet = new Image();
+        this.spritesheet.src = encodeURI('assets/bat/bat.png');
+
+        this.frame = 0;
+        this.spriteFrames = 6;
+        this.animateTime = 0;
+        this.framerate = 16;
+    }
+
+    update(time) {
+
+    }
+
+    render(time, ctx){
+        this.animateTime += time;
+        if (((this.animateTime|0)) % 4 === 0) {
+            this.frame = (this.frame + 1) % this.spriteFrames
+        }
+
+        ctx.drawImage(
+          // image
+          this.spritesheet,
+          // source rectangle
+          this.width * this.frame, 0, this.width, this.height,
+          // destination rectangle
+          this.x, this.y, this.spriteWidth, this.spriteHeight
+        );
+    }
+}
+
+module.exports = exports = Monster;
+
+},{}],4:[function(require,module,exports){
 "use strict";
 
 /**
@@ -120,10 +160,13 @@ module.exports = exports = Player;
  * @param {Postition} position object specifying an x and y
  */
 function Player(position) {
+  this.state = "walking";
+  this.frame = 0;
+  this.animateTime = 0;
   this.x = position.x;
   this.y = position.y;
   this.width  = 16;
-  this.height = 16;
+  this.height = 32;
   this.spritesheet  = new Image();
   this.spritesheet.src = encodeURI('assets/link/not link/notlink up.png');
 }
@@ -132,7 +175,14 @@ function Player(position) {
  * @function updates the player object
  * {DOMHighResTimeStamp} time the elapsed time since the last frame
  */
-Player.prototype.update = function(time) {}
+Player.prototype.update = function(time) {
+    this.animateTime += time|0;
+    if (this.animateTime > 1000/16) {
+        this.animateTime = 0;
+        this.frame = (this.frame+1) %4;
+        this.y -= 1;
+    }
+}
 
 /**
  * @function renders the player into the provided context
@@ -144,9 +194,9 @@ Player.prototype.render = function(time, ctx) {
     // image
     this.spritesheet,
     // source rectangle
-    0, 0, this.width, this.height,
+    this.width * this.frame, 0, this.width, this.height,
     // destination rectangle
-    this.x, this.y, this.width, this.height
+    this.x, this.y, 2*this.width, 2*this.height
   );
 }
 
